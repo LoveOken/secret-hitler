@@ -192,8 +192,6 @@ module.exports.rateGlickoGame = (game, accounts, winningPlayerNames) => {
 	// Create Glicko2 Ratings
 	let x = true;
 	const mapGlicko = account => {
-		debugFunction(account);
-
 		const holder = x ? account.glickoOverall : account.glickoSeason;
 
 		return holder.rating ? g2.createRating(holder.rating, holder.rd, holder.vol) : g2.createRating();
@@ -211,20 +209,20 @@ module.exports.rateGlickoGame = (game, accounts, winningPlayerNames) => {
 			let account = winningAccounts[i];
 			let outdated = !x ? account.glickoOverall : account.glickoSeason;
 
+			if (!x) account.glickoRatingHistory.push(outdated.rating);
+
 			outdated.rating = updated._mu;
 			outdated.rd = updated._phi;
 			outdated.vol = updated._sigma;
-
-			debugFunction(account);
 		} else {
 			let account = loosingAccounts[i - l];
 			let outdated = x ? account.glickoSeason : account.glickoOverall;
 
+			if (!x) account.glickoRatingHistory.push(outdated.rating);
+
 			outdated.rating = updated._mu;
 			outdated.rd = updated._phi;
 			outdated.vol = updated._sigma;
-
-			debugFunction(account);
 		}
 	};
 	newOverallRatings.forEach(updateGlicko);

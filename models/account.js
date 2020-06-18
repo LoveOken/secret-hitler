@@ -142,6 +142,7 @@ const Account = new Schema({
 		rd: Number,
 		vol: Number
 	},
+	glickoRatingHistory: [Number],
 	hashUid: String,
 	discordUsername: String,
 	discordDiscriminator: String,
