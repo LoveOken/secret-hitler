@@ -18,13 +18,13 @@ function Rating(_mu, _phi, _sigma) {
 }
 
 function Glicko2(_tau) {
-	this._mu = _mu || mu;
-	this._phi = _phi || phi;
-	this._sigma = _sigma || sigma;
+	this._mu = mu;
+	this._phi = phi;
+	this._sigma = sigma;
 	this._tau = _tau || tau;
-	this._epsilon = _epsilon || epsilon;
+	this._epsilon = epsilon;
 
-	this._ratio = _ratio || ratio;
+	this._ratio = ratio;
 }
 
 Glicko2.prototype.createRating = function(__mu, __phi, __sigma) {
