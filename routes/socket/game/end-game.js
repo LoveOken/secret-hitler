@@ -189,7 +189,7 @@ module.exports.completeGame = (game, winningTeamName) => {
 				const isRainbow = game.general.rainbowgame;
 				const isTournamentFinalGame = game.general.isTourny && game.general.tournyInfo.round === 2;
 				const eloAdjustments = rateEloGame(game, results, winningPlayerNames);
-				const glickoAdjustments = rateGlickoGame(game, results, winningPlayerNames);
+				rateGlickoGame(game, results, winningPlayerNames);
 
 				results.forEach(player => {
 					const listUser = userList.find(user => user.userName === player.username);

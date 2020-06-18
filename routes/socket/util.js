@@ -206,8 +206,8 @@ module.exports.rateGlickoGame = (game, accounts, winningPlayerNames) => {
 	const l = winningAccounts.length;
 	const updateGlicko = (updated, i) => {
 		if (i < l) {
-			let account = winningAccounts[i];
-			let outdated = !x ? account.glickoOverall : account.glickoSeason;
+			const account = winningAccounts[i];
+			const outdated = !x ? account.glickoOverall : account.glickoSeason;
 
 			if (!x) account.glickoRatingHistory.push(outdated.rating);
 
@@ -215,8 +215,8 @@ module.exports.rateGlickoGame = (game, accounts, winningPlayerNames) => {
 			outdated.rd = updated._phi;
 			outdated.vol = updated._sigma;
 		} else {
-			let account = loosingAccounts[i - l];
-			let outdated = x ? account.glickoSeason : account.glickoOverall;
+			const account = loosingAccounts[i - l];
+			const outdated = x ? account.glickoSeason : account.glickoOverall;
 
 			if (!x) account.glickoRatingHistory.push(outdated.rating);
 
@@ -228,7 +228,7 @@ module.exports.rateGlickoGame = (game, accounts, winningPlayerNames) => {
 	newOverallRatings.forEach(updateGlicko);
 	x = true;
 	newSeasonRatings.forEach(updateGlicko);
-}
+};
 
 module.exports.destroySession = username => {
 	if (process.env.NODE_ENV !== 'production') {
