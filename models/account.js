@@ -132,6 +132,16 @@ const Account = new Schema({
 	isFixed: Boolean,
 	eloSeason: Number,
 	eloOverall: Number,
+	glickoSeason: {
+		rating: Number,
+		rd: Number,
+		vol: Number
+	},
+	glickoOverall: {
+		rating: Number,
+		rd: Number,
+		vol: Number
+	},
 	hashUid: String,
 	discordUsername: String,
 	discordDiscriminator: String,

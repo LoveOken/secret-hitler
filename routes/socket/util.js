@@ -1,3 +1,5 @@
+const { Glicko2 } = require('./glicko2');
+
 /**
  * @param {object} game - game to act on.
  * @return {object} game
@@ -178,6 +180,57 @@ module.exports.rateEloGame = (game, accounts, winningPlayerNames) => {
 	});
 	return ratingUpdates;
 };
+
+module.exports.rateGlickoGame = (game, accounts, winningPlayerNames) => {
+	// Glicko constants
+	const g2 = new Glicko2(game.general.rainbowgame ? 0.2 : 0.5);
+	// Players
+	const losingPlayerNames = game.private.seatedPlayers.filter(player => !winningPlayerNames.includes(player.userName)).map(player => player.userName);
+	// Accounts
+	const winningAccounts = accounts.filter(account => winningPlayerNames.includes(account.username));
+	const loosingAccounts = accounts.filter(account => losingPlayerNames.includes(account.username));
+	// Create Glicko2 Ratings
+	let x = true;
+	const mapGlicko = account => {
+		debugFunction(account);
+
+		const holder = x ? account.glickoOverall : account.glickoSeason;
+
+		return holder.rating ? g2.createRating(holder.rating, holder.rd, holder.vol) : g2.createRating();
+	};
+	const ratingOverall = [winningAccounts.map(mapGlicko), loosingAccounts.map(mapGlicko)];
+	x = false;
+	const ratingSeason = [winningAccounts.map(mapGlicko), loosingAccounts.map(mapGlicko)];
+	// Modify ratings
+	const newOverallRatings = g2.rateByTeamComposite(ratingOverall);
+	const newSeasonRatings = g2.rateByTeamComposite(ratingSeason);
+	// Update ratings
+	const l = winningAccounts.length;
+	const updateGlicko = (updated, i) => {
+		if (i < l) {
+			let account = winningAccounts[i];
+			let outdated = !x ? account.glickoOverall : account.glickoSeason;
+
+			outdated.rating = updated._mu;
+			outdated.rd = updated._phi;
+			outdated.vol = updated._sigma;
+
+			debugFunction(account);
+		} else {
+			let account = loosingAccounts[i - l];
+			let outdated = x ? account.glickoSeason : account.glickoOverall;
+
+			outdated.rating = updated._mu;
+			outdated.rd = updated._phi;
+			outdated.vol = updated._sigma;
+
+			debugFunction(account);
+		}
+	};
+	newOverallRatings.forEach(updateGlicko);
+	x = true;
+	newSeasonRatings.forEach(updateGlicko);
+}
 
 module.exports.destroySession = username => {
 	if (process.env.NODE_ENV !== 'production') {
