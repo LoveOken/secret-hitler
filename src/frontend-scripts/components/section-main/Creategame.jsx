@@ -850,7 +850,7 @@ export default class Creategame extends React.Component {
 				flappyMode: this.state.flappyMode,
 				flappyOnlyMode: this.state.flappyOnlyMode,
 				timedMode: this.state.timedMode ? this.state.timedSliderValue[0] : false,
-				casualGame: false,
+				casualGame: this.state.casualgame,
 				rebalance6p: this.state.checkedRebalanceValues[0],
 				rebalance7p: this.state.checkedRebalanceValues[1],
 				rebalance9p2f: this.state.checkedRebalanceValues[2],
