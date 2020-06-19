@@ -155,7 +155,8 @@ const Account = new Schema({
 	secondaryColor: String,
 	tertiaryColor: String,
 	backgroundColor: String,
-	textColor: String
+	textColor: String,
+	isTournamentMod: Boolean
 });
 
 Account.plugin(passportLocalMongoose);
