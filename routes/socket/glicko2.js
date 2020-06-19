@@ -16,11 +16,11 @@ function Rating(_mu, _phi, _sigma) {
 	this._sigma = _sigma;
 }
 
-function Glicko2(_tau) {
+function Glicko2() {
 	this._mu = mu;
 	this._phi = phi;
 	this._sigma = sigma;
-	this._tau = _tau || tau;
+	this._tau = tau;
 	this._epsilon = epsilon;
 
 	this._ratio = ratio;
@@ -111,6 +111,15 @@ Glicko2.prototype.determineSigma = function(rating, diff, variance) {
 	return Math.pow(Math.exp(1), a / 2);
 };
 
+Glicko2.prototype.decayRD = function(rating, time) {
+	for (let i = 0; i < time; i++) {
+		rating._phi = Math.sqrt(Math.pow(rating._phi, 2) + Math.pow(rating._sigma, 2));
+	}
+	rating._phi = Math.min(phi, rating._phi);
+
+	return rating;
+};
+
 Glicko2.prototype.ratePlayer = function(rating, series) {
 	rating = this.scaleDown(rating);
 
@@ -139,14 +148,14 @@ Glicko2.prototype.ratePlayer = function(rating, series) {
 	difference = difference / varianceInv;
 	const variance = 1 / varianceInv;
 
-	const sigma = this.determineSigma(rating, difference, variance);
+	const sigmaPrime = this.determineSigma(rating, difference, variance);
 
-	const phiStar = Math.sqrt(Math.pow(rating._phi, 2) + Math.pow(sigma, 2));
-	const phi = 1 / Math.sqrt(1 / Math.pow(phiStar, 2) + 1 / variance);
+	const phiStar = Math.sqrt(Math.pow(rating._phi, 2) + Math.pow(sigmaPrime, 2));
+	const phiPrime = 1 / Math.sqrt(1 / Math.pow(phiStar, 2) + 1 / variance);
 
-	const mu = rating._mu + (Math.pow(phi, 2) * difference) / variance;
+	const muPrime = rating._mu + (Math.pow(phiPrime, 2) * difference) / variance;
 
-	const output = this.createRating(mu, phi, sigma);
+	const output = this.createRating(muPrime, phiPrime, sigmaPrime);
 	return this.scaleUp(output);
 };
 

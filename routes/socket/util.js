@@ -183,7 +183,7 @@ module.exports.rateEloGame = (game, accounts, winningPlayerNames) => {
 
 module.exports.rateGlickoGame = (game, accounts, winningPlayerNames) => {
 	// Glicko constants
-	const g2 = new Glicko2(game.general.rainbowgame ? 0.2 : 0.5);
+	const g2 = new Glicko2();
 	// Players
 	const losingPlayerNames = game.private.seatedPlayers.filter(player => !winningPlayerNames.includes(player.userName)).map(player => player.userName);
 	// Accounts
@@ -191,10 +191,21 @@ module.exports.rateGlickoGame = (game, accounts, winningPlayerNames) => {
 	const loosingAccounts = accounts.filter(account => losingPlayerNames.includes(account.username));
 	// Create Glicko2 Ratings
 	let x = true;
+	const dateToTime = (date1, date2) => {
+		const diff = date1 - date2;
+		return Math.round(diff / 1000 / 30);
+	};
 	const mapGlicko = account => {
 		const holder = x ? account.glickoOverall : account.glickoSeason;
+		const gray = g2.createRating(holder.rating, 35, 0.06);
+		let rainbow = holder.rd ? g2.createRating(holder.rating, holder.rd, holder.vol) : g2.createRating();
 
-		return holder.rating ? g2.createRating(holder.rating, holder.rd, holder.vol) : g2.createRating();
+		// Rating decay
+		const time = dateToTime(new Date(), account.lastCompletedGame || new Date());
+		console.log(time);
+		if (time > 40320) rainbow = g2.decayRD(rainbow, time);
+
+		return game.general.rainbowgame ? rainbow : gray;
 	};
 	const ratingOverall = [winningAccounts.map(mapGlicko), loosingAccounts.map(mapGlicko)];
 	x = false;
@@ -209,24 +220,34 @@ module.exports.rateGlickoGame = (game, accounts, winningPlayerNames) => {
 			const account = winningAccounts[i];
 			const outdated = !x ? account.glickoOverall : account.glickoSeason;
 
-			if (!x) account.glickoRatingHistory.push(outdated.rating);
+			if (!x) account.glickoRatingHistory.push(outdated.rating || 1600);
 
 			outdated.rating = updated._mu;
-			outdated.rd = updated._phi;
-			outdated.vol = updated._sigma;
+			if (game.general.rainbowgame) {
+				outdated.rd = updated._phi;
+				outdated.vol = updated._sigma;
+			}
+
+			console.log(account.username, outdated);
 		} else {
 			const account = loosingAccounts[i - l];
 			const outdated = x ? account.glickoSeason : account.glickoOverall;
 
-			if (!x) account.glickoRatingHistory.push(outdated.rating);
+			if (!x) account.glickoRatingHistory.push(outdated.rating || 1600);
 
 			outdated.rating = updated._mu;
-			outdated.rd = updated._phi;
-			outdated.vol = updated._sigma;
+			if (game.general.rainbowgame) {
+				outdated.rd = updated._phi;
+				outdated.vol = updated._sigma;
+			}
+
+			console.log(account.username, outdated);
 		}
 	};
+	console.log('Updating Overall');
 	newOverallRatings.forEach(updateGlicko);
 	x = true;
+	console.log('Updating Seasonal');
 	newSeasonRatings.forEach(updateGlicko);
 };
 
