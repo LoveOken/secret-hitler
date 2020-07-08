@@ -112,10 +112,14 @@ Glicko2.prototype.determineSigma = function(rating, diff, variance) {
 };
 
 Glicko2.prototype.decayRD = function(rating, time) {
+	rating = this.scaleDown(rating);
+
 	for (let i = 0; i < time; i++) {
 		rating._phi = Math.sqrt(Math.pow(rating._phi, 2) + Math.pow(rating._sigma, 2));
 	}
 	rating._phi = Math.min(phi, rating._phi);
+
+	rating = this.scaleUp(rating);
 
 	return rating;
 };
@@ -159,10 +163,6 @@ Glicko2.prototype.ratePlayer = function(rating, series) {
 	return this.scaleUp(output);
 };
 
-Glicko2.prototype.rate1vs1 = function(rating, adversary, drawn) {
-	return [this.ratePlayer(rating, [[drawn ? draw : win, adversary]]), this.ratePlayer(adversary, [[drawn ? draw : loss, rating]])];
-};
-
 Glicko2.prototype.rateByTeamComposite = function(teams) {
 	function avg(array) {
 		return array.reduce((acc, cur) => acc + cur) / array.length;
@@ -193,7 +193,7 @@ Glicko2.prototype.rateByTeamComposite = function(teams) {
 
 				o = this.ratePlayer(r, [[e, a]]);
 
-				output.push(o);
+				output[i_a].push(o);
 			});
 		});
 	});

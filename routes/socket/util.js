@@ -191,9 +191,9 @@ module.exports.rateGlickoGame = (game, accounts, winningPlayerNames) => {
 	const loosingAccounts = accounts.filter(account => losingPlayerNames.includes(account.username));
 	// Create Glicko2 Ratings
 	let x = true;
-	const dateToTime = (date1, date2) => {
+	const datesToMinuteDiff = (date1, date2) => {
 		const diff = date1 - date2;
-		return Math.round(diff / 1000 / 30);
+		return Math.round(diff / 1000 / 60);
 	};
 	const mapGlicko = account => {
 		const holder = x ? account.glickoOverall : account.glickoSeason;
@@ -201,9 +201,8 @@ module.exports.rateGlickoGame = (game, accounts, winningPlayerNames) => {
 		let rainbow = holder.rd ? g2.createRating(holder.rating, holder.rd, holder.vol) : g2.createRating();
 
 		// Rating decay
-		const time = dateToTime(new Date(), account.lastCompletedGame || new Date());
-		console.log(time);
-		if (time > 40320) rainbow = g2.decayRD(rainbow, time);
+		const time = datesToMinuteDiff(new Date(), account.lastCompletedGame || new Date());
+		rainbow = g2.decayRD(rainbow, Math.floor(time / 20160)); // For each 2 weeks decay RD
 
 		return game.general.rainbowgame ? rainbow : gray;
 	};
@@ -214,41 +213,27 @@ module.exports.rateGlickoGame = (game, accounts, winningPlayerNames) => {
 	const newOverallRatings = g2.rateByTeamComposite(ratingOverall);
 	const newSeasonRatings = g2.rateByTeamComposite(ratingSeason);
 	// Update ratings
-	const l = winningAccounts.length;
-	const updateGlicko = (updated, i) => {
-		if (i < l) {
-			const account = winningAccounts[i];
-			const outdated = !x ? account.glickoOverall : account.glickoSeason;
+	const updateGlicko = (updated, index, results) => {
+		const account = results[i];
+		const outdated = !x ? account.glickoOverall : account.glickoSeason;
 
-			if (!x) account.glickoRatingHistory.push(outdated.rating || 1600);
+		if (!x) account.glickoRatingHistory.push(outdated.rating || 1600);
 
-			outdated.rating = updated._mu;
-			if (game.general.rainbowgame) {
-				outdated.rd = updated._phi;
-				outdated.vol = updated._sigma;
-			}
-
-			console.log(account.username, outdated);
-		} else {
-			const account = loosingAccounts[i - l];
-			const outdated = x ? account.glickoSeason : account.glickoOverall;
-
-			if (!x) account.glickoRatingHistory.push(outdated.rating || 1600);
-
-			outdated.rating = updated._mu;
-			if (game.general.rainbowgame) {
-				outdated.rd = updated._phi;
-				outdated.vol = updated._sigma;
-			}
-
-			console.log(account.username, outdated);
+		outdated.rating = updated._mu;
+		if (game.general.rainbowgame) {
+			outdated.rd = updated._phi;
+			outdated.vol = updated._sigma;
 		}
+
+		console.log(account.username, outdated);
 	};
 	console.log('Updating Overall');
-	newOverallRatings.forEach(updateGlicko);
+	newOverallRatings[0].forEach((u, i) => updateGlicko(u, i, winningAccounts));
+	newOverallRatings[1].forEach((u, i) => updateGlicko(u, i, loosingAccounts));
 	x = true;
 	console.log('Updating Seasonal');
-	newSeasonRatings.forEach(updateGlicko);
+	newSeasonRatings[0].forEach((u, i) => updateGlicko(u, i, winningAccounts));
+	newSeasonRatings[1].forEach((u, i) => updateGlicko(u, i, loosingAccounts));
 };
 
 module.exports.destroySession = username => {
